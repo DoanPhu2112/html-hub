@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTML Hub</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --primary: #365cff;
+      --primary-dark: #2546c9;
+      --chip: #eef2ff;
+      --ok: #12b76a;
+      --shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, #eaf0ff 0, transparent 32rem), var(--bg);
+      color: var(--text);
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+      background: rgba(246, 247, 251, 0.78);
+      border-bottom: 1px solid rgba(228, 231, 236, 0.7);
+    }
+    .nav {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 190px; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 14px;
+      display: grid; place-items: center;
+      color: white; font-weight: 800;
+      background: linear-gradient(135deg, #365cff, #7c3aed);
+      box-shadow: var(--shadow);
+    }
+    .brand strong { display: block; font-size: 17px; }
+    .brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .search { flex: 1; position: relative; }
+    .search input {
+      width: 100%; height: 44px; border-radius: 14px; border: 1px solid var(--line);
+      padding: 0 14px 0 42px; background: white; color: var(--text);
+      outline: none;
+    }
+    .search svg { position: absolute; left: 14px; top: 12px; color: var(--muted); }
+    .status {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--line); background: white; border-radius: 999px;
+      padding: 10px 13px; color: var(--muted); font-size: 13px; white-space: nowrap;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--ok); }
+    .primary {
+      border: 0; border-radius: 14px; background: var(--primary); color: white;
+      height: 44px; padding: 0 16px; font-weight: 700; cursor: pointer;
+    }
+    .primary:hover { background: var(--primary-dark); }
+
+    .hero { padding: 42px 0 26px; display: grid; grid-template-columns: 1.2fr .8fr; gap: 28px; align-items: end; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 58px); line-height: 0.98; letter-spacing: -0.05em; }
+    .hero p { margin: 18px 0 0; color: var(--muted); font-size: 17px; max-width: 620px; }
+    .quick-panel {
+      background: rgba(255,255,255,.86); border: 1px solid var(--line); border-radius: 26px;
+      padding: 18px; box-shadow: var(--shadow);
+    }
+    .quick-panel h2 { margin: 0 0 12px; font-size: 16px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .metric { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: white; }
+    .metric strong { display: block; font-size: 24px; }
+    .metric span { color: var(--muted); font-size: 12px; }
+
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0 14px; }
+    .section-head h2 { margin: 0; font-size: 24px; letter-spacing: -0.03em; }
+    .section-head p { margin: 4px 0 0; color: var(--muted); }
+    .layout { display: grid; grid-template-columns: 230px 1fr; gap: 20px; align-items: start; padding-bottom: 48px; }
+    .sidebar { position: sticky; top: 96px; display: grid; gap: 8px; }
+    .cat-nav {
+      border: 1px solid var(--line); background: rgba(255,255,255,.86); border-radius: 18px;
+      padding: 10px; display: grid; gap: 6px;
+    }
+    .cat-nav a { display: flex; justify-content: space-between; padding: 10px 12px; border-radius: 12px; color: var(--muted); font-weight: 600; }
+    .cat-nav a.active, .cat-nav a:hover { background: var(--chip); color: var(--primary); }
+    .hint { color: var(--muted); font-size: 13px; padding: 8px 4px; }
+
+    .categories { display: grid; gap: 18px; }
+    .category-card {
+      background: rgba(255,255,255,.9); border: 1px solid var(--line); border-radius: 28px;
+      padding: 20px; box-shadow: var(--shadow);
+    }
+    .category-top { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .category-top h3 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+    .category-top p { margin: 6px 0 0; color: var(--muted); }
+    .count { align-self: start; border-radius: 999px; background: var(--chip); color: var(--primary); padding: 8px 12px; font-weight: 700; font-size: 13px; }
+    .slides { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .slide {
+      min-height: 150px; border: 1px solid var(--line); border-radius: 20px; background: white;
+      padding: 14px; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .badge { width: max-content; border-radius: 999px; background: #f2f4f7; color: var(--muted); padding: 5px 8px; font-size: 12px; font-weight: 700; }
+    .slide h4 { margin: 12px 0 8px; font-size: 16px; line-height: 1.25; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .actions { display: flex; gap: 8px; margin-top: 14px; }
+    .ghost { border: 1px solid var(--line); background: white; border-radius: 12px; padding: 8px 10px; cursor: pointer; color: var(--text); }
+    .ghost:hover { border-color: #b8c1d9; }
+    .view-all { display: inline-flex; margin-top: 14px; color: var(--primary); font-weight: 800; }
+
+    dialog { border: 0; border-radius: 28px; padding: 0; width: min(560px, calc(100% - 28px)); box-shadow: 0 28px 90px rgba(16,24,40,.28); }
+    dialog::backdrop { background: rgba(15, 23, 42, .42); backdrop-filter: blur(4px); }
+    .modal { padding: 22px; }
+    .modal-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .modal h3 { margin: 0; font-size: 24px; letter-spacing: -0.03em; }
+    .modal p { margin: 6px 0 0; color: var(--muted); }
+    .close { border: 0; background: #f2f4f7; width: 36px; height: 36px; border-radius: 12px; cursor: pointer; }
+    .form { display: grid; gap: 12px; }
+    label { display: grid; gap: 7px; font-weight: 700; font-size: 13px; color: #344054; }
+    input, select {
+      height: 44px; border: 1px solid var(--line); border-radius: 13px; padding: 0 12px; background: white;
+    }
+    .drop {
+      border: 1px dashed #b8c1d9; border-radius: 18px; padding: 22px; text-align: center; background: #fafbff; color: var(--muted);
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
+    @media (max-width: 900px) {
+      .nav { flex-wrap: wrap; padding: 12px 0; }
+      .brand { min-width: 0; flex: 1; }
+      .search { order: 3; flex-basis: 100%; }
+      .status { display: none; }
+      .hero { grid-template-columns: 1fr; padding-top: 30px; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .cat-nav { grid-template-columns: repeat(2, 1fr); }
+      .slides { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell nav">
+      <a class="brand" href="#">
+        <span class="logo">H</span>
+        <span><strong>HTML Hub</strong><span>Team slide operations</span></span>
+      </a>
+      <div class="search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input placeholder="Search title, owner, tag…" />
+      </div>
+      <span class="status"><span class="dot"></span> Public preview</span>
+      <button class="primary" onclick="upload.showModal()">Upload slide</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <h1>Slides grouped by category, ready to share.</h1>
+        <p>A small public web hub for teammates to upload decks without forcing anyone into a styling system.</p>
+      </div>
+      <aside class="quick-panel">
+        <h2>Hub snapshot</h2>
+        <div class="quick-grid">
+          <div class="metric"><strong>4</strong><span>Categories</span></div>
+          <div class="metric"><strong>18</strong><span>Slides</span></div>
+          <div class="metric"><strong>7d</strong><span>Latest</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="section-head">
+      <div>
+        <h2>Categories</h2>
+        <p>Code-owned list. Uploaders choose from approved categories only.</p>
+      </div>
+    </div>
+
+    <section class="layout">
+      <aside class="sidebar">
+        <nav class="cat-nav">
+          <a class="active" href="#ai">AI <span>6</span></a>
+          <a href="#devops">DevOps <span>5</span></a>
+          <a href="#frontend">Frontend <span>4</span></a>
+          <a href="#backend">Backend <span>3</span></a>
+        </nav>
+        <div class="hint">New category = edit <code>categories.json</code> and redeploy.</div>
+      </aside>
+
+      <div class="categories">
+        <article class="category-card" id="ai">
+          <div class="category-top"><div><h3>AI</h3><p>Models, prompts, agents, evals, internal demos.</p></div><span class="count">6 slides</span></div>
+          <div class="slides">
+            <div class="slide"><div><span class="badge">HTML</span><h4>Agent workflow patterns</h4><p class="meta">Phu · Aug 21 · prompts</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+            <div class="slide"><div><span class="badge">PDF</span><h4>LLM eval checklist</h4><p class="meta">Mai · Aug 18 · quality</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+            <div class="slide"><div><span class="badge">ZIP</span><h4>RAG demo deck</h4><p class="meta">Long · Aug 15 · search</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+          </div>
+          <a class="view-all" href="#">View all AI slides →</a>
+        </article>
+
+        <article class="category-card" id="devops">
+          <div class="category-top"><div><h3>DevOps</h3><p>Deployments, incidents, monitoring, infra notes.</p></div><span class="count">5 slides</span></div>
+          <div class="slides">
+            <div class="slide"><div><span class="badge">PDF</span><h4>Cloudflare Tunnel v0</h4><p class="meta">An · Aug 20 · public-url</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+            <div class="slide"><div><span class="badge">HTML</span><h4>On-call handoff</h4><p class="meta">Trang · Aug 13 · ops</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+            <div class="slide"><div><span class="badge">PDF</span><h4>Docker image slimming</h4><p class="meta">Quang · Aug 11 · build</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+          </div>
+          <a class="view-all" href="#">View all DevOps slides →</a>
+        </article>
+
+        <article class="category-card" id="frontend">
+          <div class="category-top"><div><h3>Frontend</h3><p>UI demos, browser tricks, accessibility, DX.</p></div><span class="count">4 slides</span></div>
+          <div class="slides">
+            <div class="slide"><div><span class="badge">HTML</span><h4>Simple upload UX</h4><p class="meta">Nhi · Aug 17 · forms</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+            <div class="slide"><div><span class="badge">PDF</span><h4>CSS container queries</h4><p class="meta">Duc · Aug 09 · layout</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+            <div class="slide"><div><span class="badge">ZIP</span><h4>Web view smoke tests</h4><p class="meta">Linh · Aug 02 · qa</p></div><div class="actions"><button class="ghost">Open</button><button class="ghost">Copy link</button></div></div>
+          </div>
+          <a class="view-all" href="#">View all Frontend slides →</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="upload">
+    <div class="modal">
+      <div class="modal-head">
+        <div><h3>Upload slide</h3><p>Choose a code-owned category before selecting the file.</p></div>
+        <button class="close" onclick="upload.close()">×</button>
+      </div>
+      <form class="form" method="dialog">
+        <label>Category
+          <select required>
+            <option>AI</option><option>DevOps</option><option>Frontend</option><option>Backend</option>
+          </select>
+        </label>
+        <label>Title <input required placeholder="e.g. Cloudflare Tunnel v0" /></label>
+        <label>Owner <input placeholder="Your name" /></label>
+        <label>Tags <input placeholder="ops, tunnel, public-url" /></label>
+        <label>Upload token <input type="password" placeholder="Shared secret" /></label>
+        <div class="drop">Drop PDF / ZIP HTML deck / PPTX here<br><small>Prototype only — no file is actually uploaded.</small></div>
+        <div class="modal-actions"><button class="ghost" type="button" onclick="upload.close()">Cancel</button><button class="primary">Save slide</button></div>
+      </form>
+    </div>
+  </dialog>
+</body>
+</html>

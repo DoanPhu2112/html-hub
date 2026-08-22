@@ -1,0 +1,1 @@
+{"scripts":{"dev":"bun --watch src/server.js","start":"bun src/server.js"},"dependencies":{},"devDependencies":{}}

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTML Hub</title>
+  <style>
+    :root { font-family: Arial, Helvetica, sans-serif; color: #1f2328; background: #fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #0969da; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button, input, select { font: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+    header { border-bottom: 1px solid #d0d7de; background: #f6f8fa; }
+    .top { min-height: 58px; display: flex; gap: 12px; align-items: center; }
+    .brand { font-weight: 700; font-size: 18px; margin-right: auto; }
+    .search { width: min(360px, 40vw); height: 34px; border: 1px solid #d0d7de; border-radius: 6px; padding: 0 10px; background: #fff; }
+    .btn { border: 1px solid #1f883d; background: #1f883d; color: #fff; border-radius: 6px; padding: 7px 12px; font-weight: 600; cursor: pointer; }
+    .btn.secondary { color: #24292f; background: #f6f8fa; border-color: #d0d7de; }
+    .btn.danger { color: #cf222e; background: #fff; border-color: #d0d7de; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .user { display: flex; align-items: center; gap: 8px; color: #57606a; font-size: 14px; }
+    .user strong { color: #24292f; }
+    .intro { padding: 26px 0 18px; border-bottom: 1px solid #d8dee4; }
+    h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; }
+    .muted { color: #57606a; }
+    .toolbar { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; font-size: 14px; }
+    main { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding-top: 22px; }
+    aside { border-right: 1px solid #d8dee4; padding-right: 18px; }
+    aside h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; color: #57606a; letter-spacing: .04em; }
+    .nav { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+    .nav a { display: flex; justify-content: space-between; color: #24292f; padding: 7px 8px; border-radius: 6px; }
+    .nav a:hover, .nav a.active { background: #f6f8fa; text-decoration: none; }
+    section.category { margin-bottom: 28px; }
+    .cat-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid #d8dee4; padding-bottom: 8px; margin-bottom: 0; }
+    .cat-head h2 { margin: 0; font-size: 20px; }
+    .cat-desc { margin: 6px 0 12px; color: #57606a; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #d8dee4; padding: 10px 8px; vertical-align: middle; }
+    th { color: #57606a; font-weight: 600; background: #f6f8fa; }
+    .type { display: inline-block; border: 1px solid #d0d7de; border-radius: 999px; padding: 2px 7px; font-size: 12px; color: #57606a; background: #fff; }
+    .empty { padding: 18px 8px; color: #57606a; border-bottom: 1px solid #d8dee4; }
+    .actions { white-space: nowrap; }
+    .actions button, .actions a { border: 0; background: transparent; color: #0969da; cursor: pointer; padding: 0 8px 0 0; font-size: 14px; }
+    .actions button:hover, .actions a:hover { text-decoration: underline; }
+    .notice { margin-top: 12px; padding: 10px 12px; border: 1px solid #d0d7de; background: #f6f8fa; border-radius: 6px; font-size: 14px; }
+    .notice.error { border-color: #ff8182; color: #cf222e; background: #fff8f8; }
+    dialog { border: 1px solid #d0d7de; border-radius: 8px; padding: 0; width: min(520px, calc(100% - 28px)); }
+    dialog::backdrop { background: rgba(31,35,40,.35); }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #d8dee4; background: #f6f8fa; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .modal-body { padding: 16px; display: grid; gap: 12px; }
+    label { display: grid; gap: 5px; font-size: 14px; font-weight: 600; }
+    input, select { height: 36px; border: 1px solid #d0d7de; border-radius: 6px; padding: 0 9px; }
+    input[type="file"] { height: auto; padding: 8px; }
+    .filebox { border: 1px dashed #8c959f; border-radius: 6px; padding: 18px; color: #57606a; background: #f6f8fa; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+    @media (max-width: 760px) {
+      .top { flex-wrap: wrap; padding: 10px 0; }
+      .search { width: 100%; order: 3; }
+      main { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid #d8dee4; padding: 0 0 14px; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <div class="brand">HTML Hub</div>
+      <input class="search" id="searchInput" placeholder="Search slides">
+      <div class="user" id="userState"></div>
+      <button class="btn" id="uploadButton">Upload</button>
+    </div>
+  </header>
+
+  <div class="wrap intro">
+    <h1>Team slide hub</h1>
+    <div class="muted">Public web directory for uploaded slide decks. Categories are managed in code.</div>
+    <div class="toolbar">
+      <span><b id="categoryCount">0</b> categories</span>
+      <span><b id="slideCount">0</b> slides</span>
+      <span><b>SPA + API</b> same origin</span>
+    </div>
+    <div id="notice"></div>
+  </div>
+
+  <main class="wrap">
+    <aside>
+      <h2>Categories</h2>
+      <ul class="nav" id="categoryNav"></ul>
+      <p class="muted" style="font-size:13px">Add category by editing categories.json.</p>
+    </aside>
+
+    <div id="categorySections"></div>
+  </main>
+
+  <dialog id="uploadDialog">
+    <form id="uploadForm">
+      <div class="modal-head"><h2>Upload slide</h2><button class="btn secondary" type="button" data-close="uploadDialog">Close</button></div>
+      <div class="modal-body">
+        <label>Category <select id="uploadCategory" name="categoryId" required></select></label>
+        <label>Title <input name="title" placeholder="Slide title" required></label>
+        <label>Owner <input id="ownerInput" placeholder="Your name" disabled></label>
+        <label>Tags <input name="tags" placeholder="optional, comma separated"></label>
+        <label>File <input name="file" type="file" accept=".pdf,.zip,.html,.htm,.ppt,.pptx" required></label>
+        <div class="filebox">Allowed now: PDF, ZIP HTML deck, HTML, PPT, PPTX. PPTX is stored, not converted.</div>
+        <div class="modal-actions"><button class="btn secondary" type="button" data-close="uploadDialog">Cancel</button><button class="btn" id="saveSlideButton">Save</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="loginDialog">
+    <form id="loginForm">
+      <div class="modal-head"><h2>Enter your name</h2><button class="btn secondary" type="button" data-close="loginDialog">Close</button></div>
+      <div class="modal-body">
+        <p class="muted" style="margin:0">No password. Your name is stored in the DB and used as the upload owner.</p>
+        <label>Name <input id="nameInput" autocomplete="name" placeholder="e.g. Phu" required></label>
+        <div class="modal-actions"><button class="btn secondary" type="button" data-close="loginDialog">Cancel</button><button class="btn">Continue</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module">
+    const state = { categories: [], slides: [], user: readStoredUser(), query: '' };
+    const els = {
+      userState: document.getElementById('userState'),
+      ownerInput: document.getElementById('ownerInput'),
+      categoryNav: document.getElementById('categoryNav'),
+      categorySections: document.getElementById('categorySections'),
+      categoryCount: document.getElementById('categoryCount'),
+      slideCount: document.getElementById('slideCount'),
+      uploadCategory: document.getElementById('uploadCategory'),
+      notice: document.getElementById('notice'),
+      searchInput: document.getElementById('searchInput'),
+      uploadButton: document.getElementById('uploadButton'),
+      uploadForm: document.getElementById('uploadForm'),
+      loginForm: document.getElementById('loginForm'),
+      nameInput: document.getElementById('nameInput'),
+      saveSlideButton: document.getElementById('saveSlideButton'),
+    };
+
+    document.querySelectorAll('[data-close]').forEach((button) => {
+      button.addEventListener('click', () => document.getElementById(button.dataset.close).close());
+    });
+    els.uploadButton.addEventListener('click', openUpload);
+    els.loginForm.addEventListener('submit', saveName);
+    els.uploadForm.addEventListener('submit', uploadSlide);
+    els.searchInput.addEventListener('input', () => {
+      state.query = els.searchInput.value.trim().toLowerCase();
+      renderSlides();
+    });
+
+    await loadData();
+    renderUser();
+
+    async function loadData() {
+      const [categoryRes, slideRes] = await Promise.all([
+        fetch('/api/categories'),
+        fetch('/api/slides'),
+      ]);
+      const categoryPayload = await categoryRes.json();
+      const slidePayload = await slideRes.json();
+      state.categories = categoryPayload.categories || [];
+      state.slides = slidePayload.slides || [];
+      renderCategories();
+      renderSlides();
+    }
+
+    function renderCategories() {
+      els.categoryCount.textContent = state.categories.length;
+      els.slideCount.textContent = state.slides.length;
+      els.categoryNav.innerHTML = state.categories.map((category, index) => `
+        <li><a class="${index === 0 ? 'active' : ''}" href="#${escapeAttr(category.id)}"><span>${escapeHtml(category.name)}</span><span>${category.slideCount}</span></a></li>
+      `).join('');
+      els.uploadCategory.innerHTML = state.categories.map((category) => `<option value="${escapeAttr(category.id)}">${escapeHtml(category.name)}</option>`).join('');
+    }
+
+    function renderSlides() {
+      const filteredSlides = state.slides.filter((slide) => matchesQuery(slide));
+      els.categorySections.innerHTML = state.categories.map((category) => {
+        const slides = filteredSlides.filter((slide) => slide.categoryId === category.id);
+        return `
+          <section class="category" id="${escapeAttr(category.id)}">
+            <div class="cat-head"><h2>${escapeHtml(category.name)}</h2><span class="muted">${slides.length} slides</span></div>
+            <p class="cat-desc">${escapeHtml(category.description)}</p>
+            ${renderTable(slides)}
+          </section>
+        `;
+      }).join('');
+      els.slideCount.textContent = state.slides.length;
+      renderCategories();
+    }
+
+    function renderTable(slides) {
+      if (slides.length === 0) return '<div class="empty">No slides yet.</div>';
+      return `
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>Owner</th><th>Updated</th><th></th></tr></thead>
+          <tbody>
+            ${slides.map((slide) => `
+              <tr>
+                <td><a href="${escapeAttr(slide.url)}" target="_blank" rel="noreferrer">${escapeHtml(slide.title)}</a></td>
+                <td><span class="type">${escapeHtml(slide.fileType)}</span></td>
+                <td>${escapeHtml(slide.ownerName)}</td>
+                <td>${formatDate(slide.createdAt)}</td>
+                <td class="actions"><a href="${escapeAttr(slide.url)}" target="_blank" rel="noreferrer">Open</a><button type="button" data-copy="${escapeAttr(slide.url)}">Copy</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    document.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-copy]');
+      if (!button) return;
+      await navigator.clipboard.writeText(new URL(button.dataset.copy, location.origin).href);
+      showNotice('Link copied.');
+    });
+
+    function renderUser() {
+      els.userState.innerHTML = state.user
+        ? `<span>Signed in as <strong>${escapeHtml(state.user.name)}</strong></span><button class="btn secondary" id="changeNameButton">Change</button>`
+        : '<span>Not signed in</span><button class="btn secondary" id="changeNameButton">Enter name</button>';
+      document.getElementById('changeNameButton').addEventListener('click', () => loginDialog.showModal());
+      els.ownerInput.value = state.user?.name || '';
+    }
+
+    function openUpload() {
+      if (!state.user) {
+        loginDialog.showModal();
+        return;
+      }
+      uploadDialog.showModal();
+    }
+
+    async function saveName(event) {
+      event.preventDefault();
+      const name = els.nameInput.value.trim();
+      if (!name) return;
+      const response = await fetch('/api/users/name', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const payload = await response.json();
+      if (!response.ok) return showNotice(payload.error || 'Could not save name.', true);
+      state.user = payload.user;
+      localStorage.setItem('htmlHubUser', JSON.stringify(state.user));
+      renderUser();
+      loginDialog.close();
+      showNotice(`Signed in as ${state.user.name}.`);
+    }
+
+    async function uploadSlide(event) {
+      event.preventDefault();
+      if (!state.user) return loginDialog.showModal();
+      const formData = new FormData(els.uploadForm);
+      formData.set('userId', state.user.id);
+      els.saveSlideButton.disabled = true;
+      els.saveSlideButton.textContent = 'Saving…';
+      const response = await fetch('/api/slides', { method: 'POST', body: formData });
+      const payload = await response.json();
+      els.saveSlideButton.disabled = false;
+      els.saveSlideButton.textContent = 'Save';
+      if (!response.ok) return showNotice(payload.error || 'Upload failed.', true);
+      state.slides.unshift(payload.slide);
+      uploadDialog.close();
+      els.uploadForm.reset();
+      els.ownerInput.value = state.user.name;
+      renderSlides();
+      showNotice('Slide uploaded.');
+    }
+
+    function readStoredUser() {
+      try { return JSON.parse(localStorage.getItem('htmlHubUser') || 'null'); }
+      catch { return null; }
+    }
+
+    function matchesQuery(slide) {
+      if (!state.query) return true;
+      return [slide.title, slide.ownerName, slide.categoryName, ...(slide.tags || [])].some((value) => String(value || '').toLowerCase().includes(state.query));
+    }
+
+    function formatDate(value) {
+      return new Intl.DateTimeFormat(undefined, { month: 'short', day: '2-digit' }).format(new Date(value));
+    }
+
+    function showNotice(message, isError = false) {
+      els.notice.innerHTML = `<div class="notice ${isError ? 'error' : ''}">${escapeHtml(message)}</div>`;
+      setTimeout(() => { els.notice.innerHTML = ''; }, 3000);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, '&#96;');
+    }
+  </script>
+</body>
+</html>

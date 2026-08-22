@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTML Hub — Plain</title>
+  <style>
+    :root { font-family: Arial, Helvetica, sans-serif; color: #1f2328; background: #fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #0969da; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button, input, select { font: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+    header { border-bottom: 1px solid #d0d7de; background: #f6f8fa; }
+    .top { min-height: 58px; display: flex; gap: 12px; align-items: center; }
+    .brand { font-weight: 700; font-size: 18px; margin-right: auto; }
+    .search { width: min(360px, 40vw); height: 34px; border: 1px solid #d0d7de; border-radius: 6px; padding: 0 10px; background: #fff; }
+    .btn { border: 1px solid #1f883d; background: #1f883d; color: #fff; border-radius: 6px; padding: 7px 12px; font-weight: 600; cursor: pointer; }
+    .btn.secondary { color: #24292f; background: #f6f8fa; border-color: #d0d7de; }
+    .user { display: flex; align-items: center; gap: 8px; color: #57606a; font-size: 14px; }
+    .user strong { color: #24292f; }
+    .intro { padding: 26px 0 18px; border-bottom: 1px solid #d8dee4; }
+    h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; }
+    .muted { color: #57606a; }
+    .toolbar { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; font-size: 14px; }
+    main { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding-top: 22px; }
+    aside { border-right: 1px solid #d8dee4; padding-right: 18px; }
+    aside h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; color: #57606a; letter-spacing: .04em; }
+    .nav { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+    .nav a { display: flex; justify-content: space-between; color: #24292f; padding: 7px 8px; border-radius: 6px; }
+    .nav a:hover, .nav a.active { background: #f6f8fa; text-decoration: none; }
+    section.category { margin-bottom: 28px; }
+    .cat-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid #d8dee4; padding-bottom: 8px; margin-bottom: 0; }
+    .cat-head h2 { margin: 0; font-size: 20px; }
+    .cat-desc { margin: 6px 0 12px; color: #57606a; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #d8dee4; padding: 10px 8px; vertical-align: middle; }
+    th { color: #57606a; font-weight: 600; background: #f6f8fa; }
+    .type { display: inline-block; border: 1px solid #d0d7de; border-radius: 999px; padding: 2px 7px; font-size: 12px; color: #57606a; background: #fff; }
+    .actions { white-space: nowrap; }
+    .actions button { border: 0; background: transparent; color: #0969da; cursor: pointer; padding: 0 8px 0 0; }
+    .actions button:hover { text-decoration: underline; }
+    dialog { border: 1px solid #d0d7de; border-radius: 8px; padding: 0; width: min(520px, calc(100% - 28px)); }
+    dialog::backdrop { background: rgba(31,35,40,.35); }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #d8dee4; background: #f6f8fa; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .modal-body { padding: 16px; display: grid; gap: 12px; }
+    label { display: grid; gap: 5px; font-size: 14px; font-weight: 600; }
+    input, select { height: 36px; border: 1px solid #d0d7de; border-radius: 6px; padding: 0 9px; }
+    .filebox { border: 1px dashed #8c959f; border-radius: 6px; padding: 18px; text-align: center; color: #57606a; background: #f6f8fa; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+    @media (max-width: 760px) {
+      .top { flex-wrap: wrap; padding: 10px 0; }
+      .search { width: 100%; order: 3; }
+      main { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid #d8dee4; padding: 0 0 14px; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <div class="brand">HTML Hub</div>
+      <input class="search" placeholder="Search slides">
+      <div class="user" id="userState"><span>Not signed in</span><button class="btn secondary" onclick="login.showModal()">Enter name</button></div>
+      <button class="btn" onclick="openUpload()">Upload</button>
+    </div>
+  </header>
+
+  <div class="wrap intro">
+    <h1>Team slide hub</h1>
+    <div class="muted">Public web directory for uploaded slide decks. Categories are managed in code.</div>
+    <div class="toolbar">
+      <span><b>4</b> categories</span>
+      <span><b>18</b> slides</span>
+      <span><b>Public tunnel</b> preview</span>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <aside>
+      <h2>Categories</h2>
+      <ul class="nav">
+        <li><a class="active" href="#ai"><span>AI</span><span>6</span></a></li>
+        <li><a href="#devops"><span>DevOps</span><span>5</span></a></li>
+        <li><a href="#frontend"><span>Frontend</span><span>4</span></a></li>
+        <li><a href="#backend"><span>Backend</span><span>3</span></a></li>
+      </ul>
+      <p class="muted" style="font-size:13px">Add category by editing categories.json.</p>
+    </aside>
+
+    <div>
+      <section class="category" id="ai">
+        <div class="cat-head"><h2>AI</h2><span class="muted">6 slides</span></div>
+        <p class="cat-desc">Models, prompts, agents, evals, internal demos.</p>
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>Owner</th><th>Updated</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><a href="#">Agent workflow patterns</a></td><td><span class="type">HTML</span></td><td>Phu</td><td>Aug 21</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+            <tr><td><a href="#">LLM eval checklist</a></td><td><span class="type">PDF</span></td><td>Mai</td><td>Aug 18</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+            <tr><td><a href="#">RAG demo deck</a></td><td><span class="type">ZIP</span></td><td>Long</td><td>Aug 15</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="category" id="devops">
+        <div class="cat-head"><h2>DevOps</h2><span class="muted">5 slides</span></div>
+        <p class="cat-desc">Deployments, incidents, monitoring, infra notes.</p>
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>Owner</th><th>Updated</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><a href="#">Cloudflare Tunnel v0</a></td><td><span class="type">PDF</span></td><td>An</td><td>Aug 20</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+            <tr><td><a href="#">On-call handoff</a></td><td><span class="type">HTML</span></td><td>Trang</td><td>Aug 13</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+            <tr><td><a href="#">Docker image slimming</a></td><td><span class="type">PDF</span></td><td>Quang</td><td>Aug 11</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="category" id="frontend">
+        <div class="cat-head"><h2>Frontend</h2><span class="muted">4 slides</span></div>
+        <p class="cat-desc">UI demos, browser tricks, accessibility, DX.</p>
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>Owner</th><th>Updated</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><a href="#">Simple upload UX</a></td><td><span class="type">HTML</span></td><td>Nhi</td><td>Aug 17</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+            <tr><td><a href="#">CSS container queries</a></td><td><span class="type">PDF</span></td><td>Duc</td><td>Aug 09</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+            <tr><td><a href="#">Web view smoke tests</a></td><td><span class="type">ZIP</span></td><td>Linh</td><td>Aug 02</td><td class="actions"><button>Open</button><button>Copy</button></td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="upload">
+    <form method="dialog">
+      <div class="modal-head"><h2>Upload slide</h2><button class="btn secondary" value="cancel">Close</button></div>
+      <div class="modal-body">
+        <label>Category <select><option>AI</option><option>DevOps</option><option>Frontend</option><option>Backend</option></select></label>
+        <label>Title <input placeholder="Slide title"></label>
+        <label>Owner <input id="ownerInput" placeholder="Your name"></label>
+        <label>Tags <input placeholder="optional"></label>
+        <label>Upload token <input type="password"></label>
+        <div class="filebox">Drop PDF / ZIP HTML deck / PPTX here</div>
+        <div class="modal-actions"><button class="btn secondary" value="cancel">Cancel</button><button class="btn" value="default">Save</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="login">
+    <form method="dialog" onsubmit="saveName(event)">
+      <div class="modal-head"><h2>Enter your name</h2><button class="btn secondary" value="cancel">Close</button></div>
+      <div class="modal-body">
+        <p class="muted" style="margin:0">No password. Production flow stores this name in the users table and uses it as the upload owner.</p>
+        <label>Name <input id="nameInput" autocomplete="name" placeholder="e.g. Phu" required></label>
+        <div class="modal-actions"><button class="btn secondary" value="cancel">Cancel</button><button class="btn" value="default">Continue</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const userState = document.getElementById('userState');
+    const nameInput = document.getElementById('nameInput');
+    const ownerInput = document.getElementById('ownerInput');
+
+    function renderUser() {
+      const name = localStorage.getItem('htmlHubName');
+      userState.innerHTML = name
+        ? `<span>Signed in as <strong>${escapeHtml(name)}</strong></span><button class="btn secondary" onclick="login.showModal()">Change</button>`
+        : '<span>Not signed in</span><button class="btn secondary" onclick="login.showModal()">Enter name</button>';
+      ownerInput.value = name || '';
+    }
+
+    function openUpload() {
+      if (!localStorage.getItem('htmlHubName')) {
+        login.showModal();
+        return;
+      }
+      upload.showModal();
+    }
+
+    function saveName(event) {
+      event.preventDefault();
+      const name = nameInput.value.trim();
+      if (!name) return;
+      localStorage.setItem('htmlHubName', name);
+      renderUser();
+      login.close();
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+
+    renderUser();
+  </script>
+</body>
+</html>

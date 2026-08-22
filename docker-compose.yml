@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    container_name: html-hub
+    restart: unless-stopped
+    ports:
+      - "4173:4173"
+    environment:
+      PORT: "4173"
+      DATA_DIR: /app/data
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_BYTES: "104857600"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads

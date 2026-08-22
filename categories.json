@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ai",
+    "name": "AI",
+    "description": "Models, prompts, agents, evals, internal demos."
+  },
+  {
+    "id": "devops",
+    "name": "DevOps",
+    "description": "Deployments, incidents, monitoring, infra notes."
+  }
+]
