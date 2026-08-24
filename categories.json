@@ -8,5 +8,10 @@
     "id": "devops",
     "name": "DevOps",
     "description": "Deployments, incidents, monitoring, infra notes."
+  },
+  {
+    "id": "mom",
+    "name": "MoM",
+    "description": "Minutes of Meeting"
   }
 ]
