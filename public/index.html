@@ -157,6 +157,7 @@
     });
 
     await loadData();
+    await revalidateStoredUser();
     renderGate();
 
     async function loadData() {
@@ -247,17 +248,38 @@
       event.preventDefault();
       const name = els.nameInput.value.trim();
       if (!name) return;
+      const user = await saveUserName(name);
+      if (!user) return;
+      state.user = user;
+      localStorage.setItem('htmlHubUser', JSON.stringify(state.user));
+      renderGate();
+      showNotice(`Signed in as ${state.user.name}.`);
+    }
+
+    async function revalidateStoredUser() {
+      if (!state.user?.name) return;
+      const user = await saveUserName(state.user.name, { silent: true });
+      if (!user) {
+        localStorage.removeItem('htmlHubUser');
+        state.user = null;
+        return;
+      }
+      state.user = user;
+      localStorage.setItem('htmlHubUser', JSON.stringify(state.user));
+    }
+
+    async function saveUserName(name, options = {}) {
       const response = await fetch('/api/users/name', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name }),
       });
       const payload = await response.json();
-      if (!response.ok) return showNotice(payload.error || 'Could not save name.', true);
-      state.user = payload.user;
-      localStorage.setItem('htmlHubUser', JSON.stringify(state.user));
-      renderGate();
-      showNotice(`Signed in as ${state.user.name}.`);
+      if (!response.ok) {
+        if (!options.silent) showNotice(payload.error || 'Could not save name.', true);
+        return null;
+      }
+      return payload.user;
     }
 
     async function uploadSlide(event) {
