@@ -48,6 +48,8 @@ db.exec(`
     file_type TEXT NOT NULL,
     file_size INTEGER NOT NULL,
     tags TEXT NOT NULL DEFAULT '[]',
+    deleted_at TEXT,
+    deleted_by_user_id INTEGER REFERENCES users(id),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -59,6 +61,7 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
+migrateDatabase();
 seedCategories(categories);
 
 Bun.serve({
@@ -101,6 +104,11 @@ async function routeApi(request, url) {
 
   if (request.method === "POST" && url.pathname === "/api/slides") {
     return await handleSlideUpload(request);
+  }
+
+  const slideDeleteMatch = url.pathname.match(/^\/api\/slides\/([^/]+)$/);
+  if (request.method === "DELETE" && slideDeleteMatch) {
+    return await handleSlideDelete(request, slideDeleteMatch[1]);
   }
 
   return json({ error: "Not found" }, 404);
@@ -160,7 +168,7 @@ function listCategories() {
   return db.query(`
     SELECT c.id, c.name, c.description, c.sort_order AS sortOrder, COUNT(s.id) AS slideCount
     FROM categories c
-    LEFT JOIN slides s ON s.category_id = c.id
+    LEFT JOIN slides s ON s.category_id = c.id AND s.deleted_at IS NULL
     WHERE c.active = 1
     GROUP BY c.id
     ORDER BY c.sort_order, c.name
@@ -175,7 +183,8 @@ function listSlides(categoryId) {
     FROM slides s
     JOIN categories c ON c.id = s.category_id
     JOIN users u ON u.id = s.owner_user_id
-    ${categoryId ? "WHERE s.category_id = $categoryId" : ""}
+    WHERE s.deleted_at IS NULL
+    ${categoryId ? "AND s.category_id = $categoryId" : ""}
     ORDER BY s.created_at DESC
   `;
   const rows = categoryId ? db.query(sql).all({ $categoryId: categoryId }) : db.query(sql).all();
@@ -193,6 +202,37 @@ function getSlide(id) {
     WHERE s.id = $id
   `).get({ $id: id });
   return row ? { ...row, tags: JSON.parse(row.tags || "[]") } : null;
+}
+
+async function handleSlideDelete(request, slideId) {
+  const body = await request.json().catch(() => ({}));
+  const userId = Number(body?.userId);
+
+  if (!slideId) return json({ error: "Slide id is required" }, 400);
+  if (!Number.isInteger(userId) || userId <= 0 || !getUser(userId)) return json({ error: "Valid user is required" }, 400);
+
+  const result = softDeleteSlide(slideId, userId);
+  if (!result) return json({ error: "Slide not found" }, 404);
+  return json({ slide: result });
+}
+
+function softDeleteSlide(slideId, userId) {
+  const existing = db.query("SELECT id, deleted_at AS deletedAt FROM slides WHERE id = $id").get({ $id: slideId });
+  if (!existing) return null;
+
+  if (!existing.deletedAt) {
+    db.query(`
+      UPDATE slides
+      SET deleted_at = CURRENT_TIMESTAMP,
+          deleted_by_user_id = $userId
+      WHERE id = $id
+    `).run({ $id: slideId, $userId: userId });
+
+    db.query("INSERT INTO upload_events (slide_id, user_id, event_type) VALUES ($slideId, $userId, 'deleted')")
+      .run({ $slideId: slideId, $userId: userId });
+  }
+
+  return db.query("SELECT id, title, deleted_at AS deletedAt, deleted_by_user_id AS deletedByUserId FROM slides WHERE id = $id").get({ $id: slideId });
 }
 
 function upsertUser(name) {
@@ -233,6 +273,12 @@ async function serveFile(absolutePath, contentType, fallbackToIndex) {
     }
     return new Response("Not found", { status: 404 });
   }
+}
+
+function migrateDatabase() {
+  const columns = new Set(db.query("PRAGMA table_info(slides)").all().map((column) => column.name));
+  if (!columns.has("deleted_at")) db.exec("ALTER TABLE slides ADD COLUMN deleted_at TEXT");
+  if (!columns.has("deleted_by_user_id")) db.exec("ALTER TABLE slides ADD COLUMN deleted_by_user_id INTEGER REFERENCES users(id)");
 }
 
 function safeJoin(root, target) {
