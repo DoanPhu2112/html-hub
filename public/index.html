@@ -77,7 +77,7 @@
       <h1>Enter your name</h1>
       <p class="muted">No password. Your name is stored locally and saved to the DB for uploads.</p>
       <form id="loginForm">
-        <label>Name <input id="nameInput" autocomplete="name" placeholder="e.g. Phu" required></label>
+        <label>Name <input id="nameInput" autocomplete="name" placeholder="e.g. Phu" pattern="\S+" title="Use one word only" maxlength="80" required></label>
         <button class="btn">Continue</button>
       </form>
     </div>
@@ -114,13 +114,12 @@
     <form id="uploadForm">
       <div class="modal-head"><h2>Upload slide</h2><button class="btn secondary" type="button" data-close="uploadDialog">Close</button></div>
       <div class="modal-body">
-        <label>Category <select id="uploadCategory" name="categoryId" required></select></label>
-        <label>Title <input name="title" placeholder="Slide title" required></label>
-        <label>Owner <input id="ownerInput" name="ownerName" list="ownerSuggestions" placeholder="Owner name" required></label>
-        <datalist id="ownerSuggestions"></datalist>
-        <label>Tags <input name="tags" placeholder="optional, comma separated"></label>
         <label>File <input name="file" type="file" accept=".pdf,.zip,.html,.htm,.ppt,.pptx" required></label>
         <div class="filebox">Allowed now: PDF, ZIP HTML deck, HTML, PPT, PPTX. PPTX is stored, not converted.</div>
+        <label>Category <select id="uploadCategory" name="categoryId" required disabled></select></label>
+        <label>Title <input name="title" placeholder="Slide title" required disabled></label>
+        <label>Owner <select id="ownerInput" name="ownerName" required></select></label>
+        <label>Tags <input name="tags" placeholder="optional, comma separated"></label>
         <div class="modal-actions"><button class="btn secondary" type="button" data-close="uploadDialog">Cancel</button><button class="btn" id="saveSlideButton">Save</button></div>
       </div>
     </form>
@@ -133,7 +132,6 @@
     const els = {
       userState: document.getElementById('userState'),
       ownerInput: document.getElementById('ownerInput'),
-      ownerSuggestions: document.getElementById('ownerSuggestions'),
       categoryNav: document.getElementById('categoryNav'),
       categorySections: document.getElementById('categorySections'),
       uploadCategory: document.getElementById('uploadCategory'),
@@ -154,13 +152,15 @@
     els.uploadButton.addEventListener('click', openUpload);
     els.loginForm.addEventListener('submit', saveName);
     els.uploadForm.addEventListener('submit', uploadSlide);
+    els.nameInput.addEventListener('input', () => els.nameInput.setCustomValidity(''));
     els.uploadCategory.addEventListener('change', () => {
       state.categoryManuallySelected = true;
     });
-    [els.uploadForm.elements.title, els.uploadForm.elements.tags, els.ownerInput].forEach((input) => {
+    [els.uploadForm.elements.title, els.uploadForm.elements.tags].forEach((input) => {
       input.addEventListener('input', autoSelectCategory);
     });
-    els.uploadForm.elements.file.addEventListener('change', autoSelectCategory);
+    els.ownerInput.addEventListener('change', autoSelectCategory);
+    els.uploadForm.elements.file.addEventListener('change', handleFileSelection);
     els.searchInput.addEventListener('input', () => {
       state.query = els.searchInput.value.trim().toLowerCase();
       renderSlides();
@@ -188,15 +188,14 @@
     }
 
     function renderUsers() {
-      els.ownerSuggestions.innerHTML = state.users
-        .map((user) => `<option value="${escapeAttr(user.name)}"></option>`)
+      const selectedName = els.ownerInput.value || state.user?.name || '';
+      els.ownerInput.innerHTML = state.users
+        .map((user) => `<option value="${escapeAttr(user.name)}">${escapeHtml(user.name)}</option>`)
         .join('');
+      if (state.users.some((user) => user.name === selectedName)) els.ownerInput.value = selectedName;
     }
 
     function renderCategories() {
-      els.categoryNav.innerHTML = state.categories.map((category, index) => `
-        <li><a class="${index === 0 ? 'active' : ''}" href="#${escapeAttr(category.id)}"><span>${escapeHtml(category.name)}</span><span>${category.slideCount}</span></a></li>
-      `).join('');
       els.uploadCategory.innerHTML = [
         '<option value="" selected disabled>Select category</option>',
         ...state.categories.map((category) => `<option value="${escapeAttr(category.id)}">${escapeHtml(category.name)}</option>`),
@@ -205,7 +204,14 @@
 
     function renderSlides() {
       const filteredSlides = state.slides.filter((slide) => matchesQuery(slide));
-      els.categorySections.innerHTML = state.categories.map((category) => {
+      const visibleCategories = state.query
+        ? state.categories.filter((category) => filteredSlides.some((slide) => slide.categoryId === category.id))
+        : state.categories;
+      els.categoryNav.innerHTML = visibleCategories.map((category, index) => {
+        const slideCount = filteredSlides.filter((slide) => slide.categoryId === category.id).length;
+        return `<li><a class="${index === 0 ? 'active' : ''}" href="#${escapeAttr(category.id)}"><span>${escapeHtml(category.name)}</span><span>${slideCount}</span></a></li>`;
+      }).join('');
+      els.categorySections.innerHTML = visibleCategories.map((category) => {
         const slides = filteredSlides.filter((slide) => slide.categoryId === category.id);
         return `
           <section class="category" id="${escapeAttr(category.id)}">
@@ -280,6 +286,31 @@
       state.categoryManuallySelected = false;
       els.uploadCategory.value = '';
       els.ownerInput.value = state.user?.name || '';
+      els.uploadCategory.disabled = true;
+      els.uploadForm.elements.title.disabled = true;
+    }
+
+    function handleFileSelection() {
+      const file = els.uploadForm.elements.file.files[0];
+      const hasFile = Boolean(file);
+      els.uploadCategory.disabled = !hasFile;
+      els.uploadForm.elements.title.disabled = !hasFile;
+      if (!file) return;
+
+      els.uploadForm.elements.title.value = titleFromFileName(file.name);
+      autoSelectCategory();
+    }
+
+    function titleFromFileName(fileName) {
+      return fileName
+        .replace(/\.[^.]+$/, '')
+        .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, '$1 $2')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toLocaleUpperCase() + word.slice(1).toLocaleLowerCase())
+        .join(' ');
     }
 
     function autoSelectCategory() {
@@ -315,13 +346,23 @@
       }, 0), 0);
     }
 
+    function rememberUser(user) {
+      state.users = [user, ...state.users.filter((item) => item.id !== user.id)];
+      renderUsers();
+    }
+
     async function saveName(event) {
       event.preventDefault();
       const name = els.nameInput.value.trim();
-      if (!name) return;
+      if (!name || /\s/u.test(name)) {
+        els.nameInput.setCustomValidity('Use one word only.');
+        els.nameInput.reportValidity();
+        return;
+      }
       const user = await saveUserName(name);
       if (!user) return;
       state.user = user;
+      rememberUser(user);
       localStorage.setItem('htmlHubUser', JSON.stringify(state.user));
       renderGate();
       showNotice(`Signed in as ${state.user.name}.`);
@@ -336,6 +377,7 @@
         return;
       }
       state.user = user;
+      rememberUser(user);
       localStorage.setItem('htmlHubUser', JSON.stringify(state.user));
     }
 

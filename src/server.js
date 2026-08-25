@@ -103,6 +103,7 @@ async function routeApi(request, url) {
     const body = await request.json().catch(() => null);
     const name = normalizeName(body?.name);
     if (!name) return json({ error: "Name is required" }, 400);
+    if (name.includes(" ")) return json({ error: "Name must be one word" }, 400);
     return json({ user: upsertUser(name) });
   }
 
@@ -254,7 +255,6 @@ function listUsers() {
     SELECT id, name
     FROM users
     ORDER BY last_seen_at DESC, name COLLATE NOCASE ASC
-    LIMIT 100
   `).all();
 }
 
