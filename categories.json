@@ -13,5 +13,10 @@
     "id": "mom",
     "name": "MoM",
     "description": "Minutes of Meeting"
-  }
+  },
+  {
+    "id": "microservice",
+    "name": "Microservice",
+    "description": "Microservice"
+  } 
 ]
