@@ -116,7 +116,8 @@
       <div class="modal-body">
         <label>Category <select id="uploadCategory" name="categoryId" required></select></label>
         <label>Title <input name="title" placeholder="Slide title" required></label>
-        <label>Owner <input id="ownerInput" placeholder="Your name" disabled></label>
+        <label>Owner <input id="ownerInput" name="ownerName" list="ownerSuggestions" placeholder="Owner name" required></label>
+        <datalist id="ownerSuggestions"></datalist>
         <label>Tags <input name="tags" placeholder="optional, comma separated"></label>
         <label>File <input name="file" type="file" accept=".pdf,.zip,.html,.htm,.ppt,.pptx" required></label>
         <div class="filebox">Allowed now: PDF, ZIP HTML deck, HTML, PPT, PPTX. PPTX is stored, not converted.</div>
@@ -128,10 +129,11 @@
 
 
   <script type="module">
-    const state = { categories: [], slides: [], user: readStoredUser(), query: '' };
+    const state = { categories: [], slides: [], users: [], user: readStoredUser(), query: '', categoryManuallySelected: false };
     const els = {
       userState: document.getElementById('userState'),
       ownerInput: document.getElementById('ownerInput'),
+      ownerSuggestions: document.getElementById('ownerSuggestions'),
       categoryNav: document.getElementById('categoryNav'),
       categorySections: document.getElementById('categorySections'),
       uploadCategory: document.getElementById('uploadCategory'),
@@ -152,6 +154,13 @@
     els.uploadButton.addEventListener('click', openUpload);
     els.loginForm.addEventListener('submit', saveName);
     els.uploadForm.addEventListener('submit', uploadSlide);
+    els.uploadCategory.addEventListener('change', () => {
+      state.categoryManuallySelected = true;
+    });
+    [els.uploadForm.elements.title, els.uploadForm.elements.tags, els.ownerInput].forEach((input) => {
+      input.addEventListener('input', autoSelectCategory);
+    });
+    els.uploadForm.elements.file.addEventListener('change', autoSelectCategory);
     els.searchInput.addEventListener('input', () => {
       state.query = els.searchInput.value.trim().toLowerCase();
       renderSlides();
@@ -162,23 +171,36 @@
     renderGate();
 
     async function loadData() {
-      const [categoryRes, slideRes] = await Promise.all([
+      const [categoryRes, slideRes, userRes] = await Promise.all([
         fetch('/api/categories'),
         fetch('/api/slides'),
+        fetch('/api/users'),
       ]);
       const categoryPayload = await categoryRes.json();
       const slidePayload = await slideRes.json();
+      const userPayload = await userRes.json();
       state.categories = categoryPayload.categories || [];
       state.slides = slidePayload.slides || [];
+      state.users = userPayload.users || [];
       renderCategories();
+      renderUsers();
       renderSlides();
+    }
+
+    function renderUsers() {
+      els.ownerSuggestions.innerHTML = state.users
+        .map((user) => `<option value="${escapeAttr(user.name)}"></option>`)
+        .join('');
     }
 
     function renderCategories() {
       els.categoryNav.innerHTML = state.categories.map((category, index) => `
         <li><a class="${index === 0 ? 'active' : ''}" href="#${escapeAttr(category.id)}"><span>${escapeHtml(category.name)}</span><span>${category.slideCount}</span></a></li>
       `).join('');
-      els.uploadCategory.innerHTML = state.categories.map((category) => `<option value="${escapeAttr(category.id)}">${escapeHtml(category.name)}</option>`).join('');
+      els.uploadCategory.innerHTML = [
+        '<option value="" selected disabled>Select category</option>',
+        ...state.categories.map((category) => `<option value="${escapeAttr(category.id)}">${escapeHtml(category.name)}</option>`),
+      ].join('');
     }
 
     function renderSlides() {
@@ -249,7 +271,48 @@
     }
 
     function openUpload() {
+      resetUploadForm();
       uploadDialog.showModal();
+    }
+
+    function resetUploadForm() {
+      els.uploadForm.reset();
+      state.categoryManuallySelected = false;
+      els.uploadCategory.value = '';
+      els.ownerInput.value = state.user?.name || '';
+    }
+
+    function autoSelectCategory() {
+      if (state.categoryManuallySelected) return;
+
+      const fileName = els.uploadForm.elements.file.files[0]?.name.replace(/\.[^.]+$/, '') || '';
+      const candidateTokens = tokenize([
+        els.uploadForm.elements.title.value,
+        fileName,
+        els.uploadForm.elements.tags.value,
+        els.ownerInput.value,
+      ].join(' '));
+      if (candidateTokens.length === 0) return;
+
+      const scores = state.categories.map((category) => ({
+        id: category.id,
+        score: scoreCategory(candidateTokens, tokenize(`${category.id} ${category.name} ${category.description}`)),
+      }));
+      const highestScore = Math.max(0, ...scores.map(({ score }) => score));
+      const matches = scores.filter(({ score }) => score === highestScore);
+      if (highestScore > 0 && matches.length === 1) els.uploadCategory.value = matches[0].id;
+    }
+
+    function tokenize(value) {
+      return String(value || '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((token) => token.length >= 2);
+    }
+
+    function scoreCategory(candidateTokens, categoryTokens) {
+      return candidateTokens.reduce((score, candidateToken) => score + categoryTokens.reduce((tokenScore, categoryToken) => {
+        if (candidateToken === categoryToken) return tokenScore + 3;
+        if (candidateToken.includes(categoryToken) || categoryToken.includes(candidateToken)) return tokenScore + 1;
+        return tokenScore;
+      }, 0), 0);
     }
 
     async function saveName(event) {
@@ -293,8 +356,11 @@
     async function uploadSlide(event) {
       event.preventDefault();
       if (!state.user) return renderGate();
+      const ownerName = els.ownerInput.value.trim();
+      if (!ownerName) return showNotice('Owner is required.', true);
+
       const formData = new FormData(els.uploadForm);
-      formData.set('userId', state.user.id);
+      formData.set('ownerName', ownerName);
       els.saveSlideButton.disabled = true;
       els.saveSlideButton.textContent = 'Saving…';
       const response = await fetch('/api/slides', { method: 'POST', body: formData });
@@ -302,11 +368,9 @@
       els.saveSlideButton.disabled = false;
       els.saveSlideButton.textContent = 'Save';
       if (!response.ok) return showNotice(payload.error || 'Upload failed.', true);
-      state.slides.unshift(payload.slide);
+      resetUploadForm();
       uploadDialog.close();
-      els.uploadForm.reset();
-      els.ownerInput.value = state.user.name;
-      renderSlides();
+      await loadData();
       showNotice('Slide uploaded.');
     }
 

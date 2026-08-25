@@ -91,6 +91,10 @@ async function routeApi(request, url) {
     return json({ categories: listCategories() });
   }
 
+  if (request.method === "GET" && url.pathname === "/api/users") {
+    return json({ users: listUsers() });
+  }
+
   if (request.method === "GET" && url.pathname === "/api/slides") {
     return json({ slides: listSlides(url.searchParams.get("category")) });
   }
@@ -118,19 +122,21 @@ async function handleSlideUpload(request) {
   const form = await request.formData();
   const title = String(form.get("title") || "").trim();
   const categoryId = String(form.get("categoryId") || "").trim();
-  const userId = Number(form.get("userId"));
+  const ownerName = normalizeName(form.get("ownerName"));
   const tags = parseTags(String(form.get("tags") || ""));
   const file = form.get("file");
 
   if (!title) return json({ error: "Title is required" }, 400);
   if (!categories.some((category) => category.id === categoryId)) return json({ error: "Invalid category" }, 400);
-  if (!Number.isInteger(userId) || userId <= 0 || !getUser(userId)) return json({ error: "Valid user is required" }, 400);
+  if (!ownerName) return json({ error: "Owner is required" }, 400);
   if (!(file instanceof File) || file.size === 0) return json({ error: "File is required" }, 400);
   if (file.size > MAX_UPLOAD_BYTES) return json({ error: "File is too large" }, 413);
 
   const originalName = path.basename(file.name || "slide");
   const extension = path.extname(originalName).toLowerCase();
   if (!ALLOWED_EXTENSIONS.has(extension)) return json({ error: "Unsupported file type" }, 400);
+
+  const owner = upsertUser(ownerName);
 
   const slideId = `${slugify(title)}-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
   const categoryDir = path.join(UPLOAD_DIR, categoryId, slideId);
@@ -143,12 +149,12 @@ async function handleSlideUpload(request) {
 
   db.query(`
     INSERT INTO slides (id, title, category_id, owner_user_id, original_name, file_name, file_path, file_type, file_size, tags)
-    VALUES ($id, $title, $categoryId, $userId, $originalName, $fileName, $filePath, $fileType, $fileSize, $tags)
+    VALUES ($id, $title, $categoryId, $ownerId, $originalName, $fileName, $filePath, $fileType, $fileSize, $tags)
   `).run({
     $id: slideId,
     $title: title,
     $categoryId: categoryId,
-    $userId: userId,
+    $ownerId: owner.id,
     $originalName: originalName,
     $fileName: storedName,
     $filePath: relativePath,
@@ -157,8 +163,8 @@ async function handleSlideUpload(request) {
     $tags: JSON.stringify(tags),
   });
 
-  db.query("INSERT INTO upload_events (slide_id, user_id, event_type) VALUES ($slideId, $userId, 'uploaded')")
-    .run({ $slideId: slideId, $userId: userId });
+  db.query("INSERT INTO upload_events (slide_id, user_id, event_type) VALUES ($slideId, $ownerId, 'uploaded')")
+    .run({ $slideId: slideId, $ownerId: owner.id });
 
   const slide = getSlide(slideId);
   return json({ slide }, 201);
@@ -241,6 +247,15 @@ function upsertUser(name) {
     ON CONFLICT(name) DO UPDATE SET last_seen_at = CURRENT_TIMESTAMP
   `).run({ $name: name });
   return db.query("SELECT id, name, created_at AS createdAt, last_seen_at AS lastSeenAt FROM users WHERE name = $name COLLATE NOCASE").get({ $name: name });
+}
+
+function listUsers() {
+  return db.query(`
+    SELECT id, name
+    FROM users
+    ORDER BY last_seen_at DESC, name COLLATE NOCASE ASC
+    LIMIT 100
+  `).all();
 }
 
 function getUser(id) {
